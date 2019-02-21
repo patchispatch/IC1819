@@ -1,0 +1,7 @@
+# Personales
+*.pdf
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.aux

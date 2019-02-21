@@ -1,0 +1,114 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}	%Idioma
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx} %Añadir imágenes
+\usepackage{geometry}	%Ajustar márgenes
+\usepackage[export]{adjustbox}[2011/08/13]
+\usepackage{float}
+\restylefloat{table}
+\usepackage{hyperref}
+\usepackage{titling}
+%\usepackage{minted}
+\usepackage[font=small,labelfont=bf]{caption} 
+
+%Opciones de encabezado y pie de página:
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{}
+%\rhead{}
+\lfoot{Ingeniería del Conocimiento}
+\cfoot{}
+\rfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+%Opciones de fuente:
+\usepackage[utf8]{inputenc}
+\usepackage[default]{sourcesanspro}
+\usepackage{sourcecodepro}
+\usepackage[T1]{fontenc}
+
+
+\setlength{\parindent}{0pt}
+\setlength{\headheight}{15pt}
+\setlength{\voffset}{10mm}
+
+% Custom colors
+\usepackage{color}
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+
+\usepackage{listings}
+
+% Evitar guiones al final de línea.
+\tolerance=1
+\emergencystretch=\maxdimen
+\hyphenpenalty=10000
+\hbadness=10000
+
+\pretitle{%
+  \centering
+  \LARGE
+  \includegraphics[scale=0.5]{../../../../logo.png}\\[\bigskipamount]
+}
+\posttitle{\begin{center} \end{center}}
+
+\author{Juan Ocaña Valenzuela}
+\title{\textbf{Ingeniería del Conocimiento} \\ 
+ Sistema Experto para clasificar SPAM: }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% EL DOCUMENTO EMPIEZA AQUÍ
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\maketitle
+
+\begin{center}
+%\url{https://github.com/patchispatch}
+
+Versión: 1.0
+\end{center}
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Conocimiento propio para clasificar un email como SPAM}
+
+Un correo SPAM es aquel no deseado por el receptor, ya sea porque lo ha enviado una 
+compañía con intenciones publicitarias, un anónimo que los servidores han marcado como 
+"peligroso" u otros que el propio usuario haya restringido. Un servidor de correo debe ser
+capaz de detectar este correo y almacenarlo en la respectiva carpeta SPAM del usuario.
+
+Un correo SPAM puede ser considerado así si cumple estas condiciones:
+
+\begin{itemize}
+\item El correo proviene de una fuente marcada por el servidor como spam.
+\item El correo proviene de una fuente marcada por el usuario como spam.
+\item El servidor ha recibido ese mismo correo muchas veces, para diferentes usuarios, en 
+una ventana de tiempo acotada.
+\item El correo contiene un enlace que el servidor ha marcado como malicioso.
+\item El correo contiene archivos adjuntos que son potencial malware.
+\end{itemize}
+
+\section{Mayor dificultad para que el sistema experto categorice SPAM}
+Considero que la mayor dificultad sería no vulnerar la privacidad de los usuarios para categorizar spam,
+ya que las medidas anteriormente mencionadas requieren acceder al contenido del mensaje.
+
+\medskip
+
+Suponiendo que no existiese este problema, el Sistema Experto tendría que implementar
+una lista negra de fuentes y enlaces maliciosos. El Sistema Experto debería, además, estimar 
+en qué medida pasa un correo sus filtros, y recomendar si marcarlo como spam o no si supera un determinado
+umbral.
+
+\end{document}
