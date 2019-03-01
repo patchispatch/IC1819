@@ -8,10 +8,10 @@
 ; -----------------------------------------------------------------------------
 ; En esta práctica se ha escogido un plano de una vivienda, y se pretende
 ; representar la misma de cara a que un sistema experto para el control de
-; la domótica de la casa pueda saber el número de habitaciones y cómo están 
-; conectadas. Este archivo define los hechos necesarios para representar las 
+; la domótica de la casa pueda saber el número de habitaciones y cómo están
+; conectadas. Este archivo define los hechos necesarios para representar las
 ; diferentes habitaciones.
-; 
+;
 ; La casa está compuesta de las siguientes habitaciones:
 ;  - Salón (lroom)
 ;  - Cocina (kitchen)
@@ -23,81 +23,57 @@
 ;  - Habitación pequeña (small)
 ;  - Entrada (hall)
 ;  - Patio (courtyard)
+;  - Terraza 1 (terrace_1)
+;  - Terraza 2 (terrace_2)
 ;
-; Como el sistema tiene que poder deducir qué habitaciones son exteriores, 
-; añadiremos la "habitación exterior":
-;  - Exterior (outside)
+; Las habitaciones se definirán como hechos de la siguiente forma:
+;    (room <room_id>)
 ;
-; Los hechos para representar habitaciones tendrán la siguiente estructura:
-; (room <nombre_hab> <hab_conectadas>)
+; También se considerarán las puertas, pasos y ventanas asociadas
+; a las mismas. Consideraremos que las puertas y los pasos unen dos
+; habitaciones, y las ventanas pertenecen a una habitación. Todos
+; estos elementos estarán identificados por su ID.
 ;
-; ############################################################################# 
+; Las definiremos de la siguiente forma:
+;    (door <door_id> <room_id_1> <room_id_2>)
+;    (window <window_id> <room_id>)
+;    (passage <pass_id> <room_id_1> <room_id_2>)
+;
+; #############################################################################
 
-; Definición de la plantilla de habitación:
-(deftemplate room
-   (field name)
-   (multifield connected_rooms)
+; Definición de habitaciones:
+(deffacts rooms
+  (room lroom)
+  (room kitchen)
+  (room bath)
+  (room corridor)
+  (room office)
+  (room big)
+  (room medium)
+  (room small)
+  (room hall)
+  (room courtyard)
+  (room terrace_1)
+  (room terrace_2)
 )
 
-; Definición de las habitaciones de nuestra casa:
-(deffacts rooms
-   ; Salón:
-   (room
-      (name lroom)
-      (connected_rooms corridor outside)
-   )
+; Definición de las puertas:
+(deffacts doors
+  (door terr1_kitchen terrace_1 kitchen)
+  (door terr1_lroom terrace_1 lroom)
+  (door kitchen_corridor kitchen corridor)
+  (door bath_corridor bath corridor)
+  (door office_corridor office corridor)
+  (door medium_corridor medium corridor)
+  (door big_corridor big corridor)
+  (door small_corridor small corridor)
+  (door entrance_corridor entrance corridor)
+  (door courtyard_corridor courtyard corridor)
+  (door entrance_courtyard entrance courtyard)
+)
 
-   ; Cocina:
-   (room
-      (name kitchen)
-      (connected_rooms corridor outside)
-   )
-
-   ; Baño:
-   (room
-      (name bath)
-      (connected_rooms corridor)
-   )
-
-   ; Pasillo:
-   (room
-      (name corridor)
-      (connected_rooms courtyard office medium bath lroom kitchen hall)
-   )
-
-   ; Despacho:
-   (room
-      (name office)
-      (connected_rooms corridor)
-   )
-
-   ; Habitación grande:
-   (room
-      (name big)
-      (connected_rooms hall)
-   )
-   
-   ; Habitación mediana:
-   (room
-      (name medium)
-      (connected_rooms corridor)
-   )
-
-   ; Habitación pequeña:
-   (room
-      (name small)
-      (connected_rooms hall)
-   )
-
-   ; Entrada:
-   (room
-      (name hall)
-      (connected_rooms corridor small big courtyard outside)
-   )
-
-   ; Patio:
-   (room
-      (name courtyard)
-      (connected_rooms corridor hall)
-   )
+; Definición de los pasos:
+(deffacts passages
+  (passage terr2_courtyard terrace_2 courtyard)
+  (passage lroom_corridor lroom corridor)
 )
