@@ -70,10 +70,59 @@
   (door entrance_corridor entrance corridor)
   (door courtyard_corridor courtyard corridor)
   (door entrance_courtyard entrance courtyard)
+  (door entrance_outside entrance outside)
 )
 
 ; Definición de los pasos:
 (deffacts passages
   (passage terr2_courtyard terrace_2 courtyard)
   (passage lroom_corridor lroom corridor)
+)
+
+; Definición de las ventanas:
+(deffacts windows
+  (window w_entrance entrance)
+  (window w_small small)
+  (window w_big big)
+  (window w_terr2 terrace_2)
+  (window w_lroom lroom)
+  (window w_kitchen kitchen)
+  (window w_terr1 terrace_1)
+)
+
+; Definición de reglas:
+
+; Se puede acceder de una habitación a otra a través de una puerta:
+(defrule posible_pasar_puerta
+  (door ?door_id ?room_1 ?room_2)
+  =>
+  (assert(posible_pasar ?room_1 ?room_2))
+)
+
+; Se puede acceder de una habitación a otra a través de un paso:
+(defrule posible_pasar_paso
+  (passage ?passage_id ?room_1 ?room_2)
+  =>
+  (assert(posible_pasar ?room_1 ?room_2))
+)
+
+; La habitación es interior:
+(defrule habitacion_interior
+  (room ?room_id)
+  (window ?window_id ?room_id)
+  =>
+  (assert(habitacion_interior ?room_id))
+)
+
+; Imprimir por pantalla el resultado:
+(defrule print_posible_pasar
+  (posible_pasar ?room_1 ?room_2)
+  =>
+  (printout t crlf "Posible pasar de " ?room_1 " a " ?room_2)
+)
+
+(defrule print_habitacion_interior
+  (habitacion_interior ?room_id)
+  =>
+  (printout t crlf "La habitación " ?room_id " es exterior")
 )
