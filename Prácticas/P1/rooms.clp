@@ -106,10 +106,24 @@
   (assert(posible_pasar ?room_1 ?room_2))
 )
 
+; Es necesario pasar por una habitación intermedia para llegar a otra:
+(defrule necesario_pasar
+  (or
+    (door ?door_id ?room_1 ?room_2)
+    (passage ?pass_id ?room_1 ?room_2)
+  )
+  (or
+    (not (door ~?door_id ?room_1 ?))
+    (not (passage ~?pass_id ?room_1 ?))
+  )
+  =>
+  (assert (necesario_pasar ?room_1 ?room_2))
+)
+
 ; La habitación es interior:
 (defrule habitacion_interior
   (room ?room_id)
-  (window ?window_id ?room_id)
+  (not(window ?window_id ?room_id))
   =>
   (assert(habitacion_interior ?room_id))
 )
@@ -121,8 +135,14 @@
   (printout t crlf "Posible pasar de " ?room_1 " a " ?room_2)
 )
 
+(defrule print_necesario_pasar
+  (posible_pasar ?room_1 ?room_2)
+  =>
+  (printout t crlf "Necesario pasar de " ?room_1 " a " ?room_2)
+)
+
 (defrule print_habitacion_interior
   (habitacion_interior ?room_id)
   =>
-  (printout t crlf "La habitación " ?room_id " es exterior")
+  (printout t crlf "La habitación " ?room_id " es interior")
 )
