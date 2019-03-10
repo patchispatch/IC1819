@@ -27,7 +27,7 @@
 ;  - Terraza 2 (terrace_2)
 ;
 ; Las habitaciones se definirán como hechos de la siguiente forma:
-;    (room <room_id>)
+;    (room <room_id> <puertas_pasos_asociados>)
 ;
 ; También se considerarán las puertas, pasos y ventanas asociadas
 ; a las mismas. Consideraremos que las puertas y los pasos unen dos
@@ -35,48 +35,50 @@
 ; estos elementos estarán identificados por su ID.
 ;
 ; Las definiremos de la siguiente forma:
-;    (door <door_id> <room_id_1> <room_id_2>)
+;    (door <door_id>)
 ;    (window <window_id> <room_id>)
-;    (passage <pass_id> <room_id_1> <room_id_2>)
+;    (passage <pass_id>)
 ;
 ; #############################################################################
 
 ; Definición de habitaciones:
 (deffacts rooms
-  (room lroom)
-  (room kitchen)
-  (room bath)
-  (room corridor)
-  (room office)
-  (room big)
-  (room medium)
-  (room small)
-  (room hall)
-  (room courtyard)
-  (room terrace_1)
-  (room terrace_2)
+  (room lroom terr_1_lroom lroom_corridor)
+  (room kitchen terr1_kitchen kitchen_corridor)
+  (room bath bath_corridor)
+  (room corridor kitchen_corridor bath_corridor office_corridor medium_corridor
+                 big_corridor small_corridor entrance_corridor
+                 courtyard_corridor lroom_corridor)
+  (room office office_corridor)
+  (room big big_corridor)
+  (room medium medium_corridor)
+  (room small small_corridor)
+  (room entrance entrance_corridor entrance_courtyard)
+  (room courtyard courtyard_corridor terr2_courtyard)
+  (room terrace_1 terr1_kitchen terr1_lroom)
+  (room terrace_2 terr2_courtyard)
 )
 
 ; Definición de las puertas:
 (deffacts doors
-  (door terr1_kitchen terrace_1 kitchen)
-  (door terr1_lroom terrace_1 lroom)
-  (door kitchen_corridor kitchen corridor)
-  (door bath_corridor bath corridor)
-  (door office_corridor office corridor)
-  (door medium_corridor medium corridor)
-  (door big_corridor big corridor)
-  (door small_corridor small corridor)
-  (door entrance_corridor entrance corridor)
-  (door courtyard_corridor courtyard corridor)
-  (door entrance_courtyard entrance courtyard)
-  (door entrance_outside entrance outside)
+  (door terr1_kitchen)
+  (door terr1_lroom)
+  (door kitchen_corridor)
+  (door bath_corridor)
+  (door office_corridor)
+  (door medium_corridor)
+  (door big_corridor)
+  (door small_corridor)
+  (door entrance_corridor)
+  (door courtyard_corridor)
+  (door entrance_courtyard)
+  (door entrance_outside)
 )
 
 ; Definición de los pasos:
 (deffacts passages
-  (passage terr2_courtyard terrace_2 courtyard)
-  (passage lroom_corridor lroom corridor)
+  (passage terr2_courtyard)
+  (passage lroom_corridor)
 )
 
 ; Definición de las ventanas:
@@ -93,31 +95,22 @@
 ; Definición de reglas:
 
 ; Se puede acceder de una habitación a otra a través de una puerta:
-(defrule posible_pasar_puerta
-  (door ?door_id ?room_1 ?room_2)
-  =>
-  (assert(posible_pasar ?room_1 ?room_2))
-)
-
-; Se puede acceder de una habitación a otra a través de un paso:
-(defrule posible_pasar_paso
-  (passage ?passage_id ?room_1 ?room_2)
+(defrule posible_pasar
+  (room ?room_1 $? ?door_pass $?)
+  (room ?room_2 $? ?door_pass $?)
+  (test(neq ?room_1 ?room_2))
   =>
   (assert(posible_pasar ?room_1 ?room_2))
 )
 
 ; Es necesario pasar por una habitación intermedia para llegar a otra:
 (defrule necesario_pasar
-  (or
-    (door ?door_id ?room_1 ?room_2)
-    (passage ?pass_id ?room_1 ?room_2)
-  )
-  (or
-    (not (door ~?door_id ?room_1 ?))
-    (not (passage ~?pass_id ?room_1 ?))
-  )
+  (room ?room_1 ?door_pass)
+  (room ?room_1 ?door_pass_2)
+  (test(neq ?door_pass ?door_pass_2))
+  (room ?room_2 ?door_pass)
   =>
-  (assert (necesario_pasar ?room_1 ?room_2))
+  (assert(necesario_pasar ?room_1 ?room_2))
 )
 
 ; La habitación es interior:
