@@ -183,28 +183,107 @@
   (assert(ultimo_registro ?tipo ?hab ?t1))
 )
 
+; Devuelve una lista ordenada de los registros:
+(defrule genera_informe
+  (informe ?hab)
+  =>
+  (bind ?seg (totalsegundos ?*hora* ?*minutos* ?*segundos*))
+
+  ; Iniciamos la aventura para buscar el mínimo:
+  (assert(encontrar_minimo ?hab 0))
+
+  ; Establecemos un valor artificialmente alto:
+  (assert(minimo_actual ?hab 60000000))
+
+  ; Pasamos la hora a formato legible:
+  (bind ?hh (hora-segundos ?seg))
+  (bind ?mm (minuto-segundos ?seg))
+  (bind ?ss (segundo-segundos ?seg))
+
+  ; Imprimimos por pantalla:
+  (printout t crlf "Generando informe de " ?hab " a las " ?hh ":" ?mm ":" ?ss ": ")
+)
+
+(defrule encontrar_minimo
+  (declare (salience 300))
+  ?encontrar <- (encontrar_minimo ?hab ?seg1)
+  ?borrar <- (minimo_actual ?hab ?min)
+  (valor_registrado ?seg2 ?tipo ?hab ?valor)
+  (test(> ?seg2 ?seg1))
+  (test(< ?seg2 ?min))
+  =>
+  ; Borramos el anterior mínimo:
+  (retract ?borrar)
+
+  (printout t crlf "A")
+
+  ; Creamos el nuevo:
+  (assert(minimo_actual ?hab ?seg2))
+
+  ; Continuamos el bucle creando de nuevo el hecho y borrando el anterior:
+  (retract ?encontrar)
+  (assert(encontrar_minimo ?hab ?seg2))
+)
+
+(defrule imprimir_minimo
+  (declare(salience 200))
+  ?borrar <- (minimo_actual ?hab ?seg)
+  (valor_registrado ?seg ?tipo ?hab ?valor)
+  =>
+  ; Calculamos la hora en formato legible:
+  (bind ?hh (hora-segundos ?seg))
+  (bind ?mm (minuto-segundos ?seg))
+  (bind ?ss (segundo-segundos ?seg))
+
+  ; Imprimimos por pantalla:
+  (printout t crlf "Tipo: " ?tipo ". Valor: " ?valor ". Hora: " ?hh ":" ?mm ":" ?ss ".")
+
+  ; Borramos el mínimo:
+  (retract ?borrar)
+
+  ; Buscamos el siguiente mínimo:
+  (assert(encontrar_minimo ?hab ?seg))
+
+  ; Establecemos un valor artificialmente alto:
+  (assert(minimo_actual ?hab 6000000))
+)
+
+(defrule borrar_encontrar_minimo
+  (declare(salience -100))
+  ?borrar <- (encontrar_minimo ? ?)
+  =>
+  (retract ?borrar)
+)
+
+(defrule borrar_minimo_actual
+  (declare(salience -100))
+  ?borrar <- (minimo_actual ? ?)
+  =>
+  (retract ?borrar)
+)
+
 ; Imprimir por pantalla el resultado:
-(defrule print_posible_pasar
-  (posible_pasar ?room_1 ?room_2)
-  =>
-  (printout t crlf "Posible pasar de " ?room_1 " a " ?room_2)
-)
+;(defrule print_posible_pasar
+;  (posible_pasar ?room_1 ?room_2)
+;  =>
+;  (printout t crlf "Posible pasar de " ?room_1 " a " ?room_2)
+;)
 
-(defrule print_necesario_pasar
-  (necesario_pasar ?room_1 ?room_2)
-  =>
-  (printout t crlf "Necesario pasar de " ?room_1 " a " ?room_2)
-)
+;(defrule print_necesario_pasar
+;  (necesario_pasar ?room_1 ?room_2)
+;  =>
+;  (printout t crlf "Necesario pasar de " ?room_1 " a " ?room_2)
+;)
 
-(defrule print_habitacion_interior
-  (habitacion_interior ?room_id)
-  =>
-  (printout t crlf "La habitación " ?room_id " es interior")
-)
+;(defrule print_habitacion_interior
+;  (habitacion_interior ?room_id)
+;  =>
+;  (printout t crlf "La habitación " ?room_id " es interior")
+;)
 
-(defrule print_ultimos_registros
-  (declare (salience -1000))
-  (ultimo_registro ?tipo ?hab ?t)
-  =>
-  (printout t crlf "Último registro almacenado: " ?tipo " " ?hab " " ?t ".")
-)
+;(defrule print_ultimos_registros
+;  (declare (salience -1000))
+;  (ultimo_registro ?tipo ?hab ?t)
+;  =>
+;  (printout t crlf "Último registro almacenado: " ?tipo " " ?hab " " ?t ".")
+;)
