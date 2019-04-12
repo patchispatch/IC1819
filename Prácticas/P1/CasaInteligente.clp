@@ -27,7 +27,7 @@
 ;  - Terraza 2 (terraza_2)
 ;
 ; Las habitaciones se definirán como hechos de la siguiente forma:
-;    (room <room_id> <puertas_pasos_asociados>)
+;    (room <room_id> <puertas_pasos_asociados> <tipo_hab>)
 ;
 ; También se considerarán las puertas, pasos y ventanas asociadas
 ; a las mismas. Consideraremos que las puertas y los pasos unen dos
@@ -39,24 +39,32 @@
 ;    (window <window_id> <room_id>)
 ;    (passage <pass_id>)
 ;
+;
+; Manejo inteligente de las luces:
+; Existen cuatro tipos de salas:
+; - Tipo 1: salones. Mínimo 300lx, máximo 600lx.
+; - Tipo 2: dormitorios. Mínimo 150lx, máximo 300lx.
+; - Tipo 3: cocinas, baños y pasillos. Mínimo 200lx, máximo 400lx.
+; - Tipo 4: despachos. Mínimo 500lx, máximo 1000lx.
+;
 ; #############################################################################
 
 ; Definición de habitaciones:
 (deffacts rooms
-  (room salon terr_1_salon salon_pasillo)
-  (room cocina terr1_cocina cocina_pasillo)
-  (room bano bano_pasillo)
+  (room salon terr_1_salon salon_pasillo tipo_1)
+  (room cocina terr1_cocina cocina_pasillo tipo_3)
+  (room bano bano_pasillo tipo_3)
   (room pasillo cocina_pasillo bano_pasillo despacho_pasillo mediana_pasillo
                  grande_pasillo pequena_pasillo entrada_pasillo
-                 patio_pasillo salon_pasillo)
-  (room despacho despacho_pasillo)
-  (room grande grande_pasillo)
-  (room mediana mediana_pasillo)
-  (room pequena pequena_pasillo)
-  (room entrada entrada_pasillo entrada_patio)
-  (room patio patio_pasillo terr2_patio)
-  (room terraza_1 terr1_cocina terr1_salon)
-  (room terraza_2 terr2_patio)
+                 patio_pasillo salon_pasillo tipo_3)
+  (room despacho despacho_pasillo tipo_4)
+  (room grande grande_pasillo tipo_2)
+  (room mediana mediana_pasillo tipo_2)
+  (room pequena pequena_pasillo tipo_2)
+  (room entrada entrada_pasillo entrada_patio tipo_3)
+  (room patio patio_pasillo terr2_patio tipo_3)
+  (room terraza_1 terr1_cocina terr1_salon tipo_3)
+  (room terraza_2 terr2_patio tipo_3)
 )
 
 ; Definición de las puertas:
@@ -135,6 +143,14 @@
   (ultimo_registro estadoluz patio 0)
   (ultimo_registro estadoluz terraza_1 0)
   (ultimo_registro estadoluz terraza_2 0)
+)
+
+; Tipos de habitaciones: (tipo ?minimo ?maximo)
+(deffacts tipos_habitaciones
+  (tipo_sala tipo_1 300 600)
+  (tipo_sala tipo_2 150 300)
+  (tipo_sala tipo_3 200 400)
+  (tipo_sala tipo_4 500 1000)
 )
 
 ; Definición de reglas:
@@ -261,6 +277,65 @@
   =>
   (retract ?borrar)
 )
+
+(defrule borrar_informe
+  (declare(salience -100))
+  ?borrar <- (informe ?)
+  =>
+  (retract ?borrar)
+)
+
+; -----------------------------------------------
+; APARTADO 3.B
+; Manejo inteligente de las luces:
+
+; Corregir baja luminosidad:
+(defrule encender_baja_luminosidad
+  (valor luminosidad ?hab ?valor)
+  (room ?nombre ?$ ?tipo)
+  (tipo_sala ?tipo ?minimo ?)
+  (test(< ?valor ?minimo))
+  =>
+  ; Encender luz en esta habitación:
+  (assert(accion pulsador_luz ?hab encender))
+)
+
+; Corregir alta luminosidad:
+(defrule apagar_alta_luminosidad
+  (valor luminosidad ?hab ?valor)
+  (room ?nombre ?$ ?tipo)
+  (tipo_sala ?tipo ? ?maximo)
+  (test(> ?valor ?maximo))
+  =>
+  ; Apagar la luz en esta habitación:
+  (assert(accion pulsador_luz ?hab apagar))
+)
+
+; Encender luces en base a los sensores de movimiento:
+
+(defrule encender_movimiento
+  (valor estadoluz ?hab off)
+  (valor movimiento ?hab on)
+  =>
+  (accion pulsador_luz ?hab encender)
+)
+
+; OPCIÓN 1: apagar una sala si no hay movimiento en ella tras 10 segundos
+; desde la detección de movimiento off.
+
+(defrule hab_parcialmente_inactiva
+  (valor_registrado ?seg estadoluz ?hab on)
+  (valor movimiento ?hab off)
+  =>
+  (parc_inactiva ?hab ?seg)
+
+)
+
+(defrule hab_inactiva
+  (parc_inactiva ?hab ?seg)
+  ()
+)
+
 
 ; Imprimir por pantalla el resultado:
 ;(defrule print_posible_pasar
