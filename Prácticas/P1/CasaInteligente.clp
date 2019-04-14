@@ -145,7 +145,8 @@
   (ultimo_registro estadoluz terraza_2 0)
 )
 
-; Tipos de habitaciones: (tipo ?minimo ?maximo)
+; Tipos de habitaciones para regular la intensidad de la luz.
+; Formato: (tipo ?minimo ?maximo)
 (deffacts tipos_habitaciones
   (tipo_sala tipo_1 300 600)
   (tipo_sala tipo_2 150 300)
@@ -191,15 +192,20 @@
 
 ; Actualizar el último registro del sensor de una habitación:
 (defrule actualiza_ultimo_registro
+  ; Existe un valor registrado:
   (valor_registrado ?t1 ?tipo ?hab ?)
+  ; Existe el último registro de ese tipo y habitación:
   ?borrar <- (ultimo_registro ?tipo ?hab ?t2)
+  ; Si el tiempo del nuevo registro es mayor al último, esto será cierto:
   (test (> ?t1 ?t2))
   =>
+  ; Borramos el anterior último registro e introducimos el nuevo en la base
+  ; de hechos:
   (retract ?borrar)
   (assert(ultimo_registro ?tipo ?hab ?t1))
 )
 
-; Devuelve una lista ordenada de los registros:
+; Devuelve una lista ordenada de los registros de una habitación:
 (defrule genera_informe
   (informe ?hab)
   =>
@@ -220,27 +226,30 @@
   (printout t crlf "Generando informe de " ?hab " a las " ?hh ":" ?mm ":" ?ss ": ")
 )
 
+; Regla para encontrar el mínimo a partir de una hora:
 (defrule encontrar_minimo
   (declare (salience 300))
+  ; Se ha iniciado la aventura para encontrar el mínimo:
   ?encontrar <- (encontrar_minimo ?hab ?seg1)
+  ; Existe un mínimo actual:
   ?borrar <- (minimo_actual ?hab ?min)
+  ; Entra un valor registrado:
   (valor_registrado ?seg2 ?tipo ?hab ?valor)
+  ; Si es mayor que seg1 y menor que el mínimo esto será cierto:
   (test(> ?seg2 ?seg1))
   (test(< ?seg2 ?min))
   =>
   ; Borramos el anterior mínimo:
   (retract ?borrar)
-
-  (printout t crlf "A")
-
   ; Creamos el nuevo:
   (assert(minimo_actual ?hab ?seg2))
 
-  ; Continuamos el bucle creando de nuevo el hecho y borrando el anterior:
+  ; Proseguimos la aventura creando de nuevo el hecho y borrando el anterior:
   (retract ?encontrar)
   (assert(encontrar_minimo ?hab ?seg2))
 )
 
+; Imprime el valor mínimo encontrado:
 (defrule imprimir_minimo
   (declare(salience 200))
   ?borrar <- (minimo_actual ?hab ?seg)
@@ -264,6 +273,7 @@
   (assert(minimo_actual ?hab 6000000))
 )
 
+; Borra los hechos auxiliares utilizados para encontrar el mínimo:
 (defrule borrar_encontrar_minimo
   (declare(salience -100))
   ?borrar <- (encontrar_minimo ? ?)
@@ -290,6 +300,8 @@
 ; Manejo inteligente de las luces:
 
 ; Corregir baja luminosidad:
+; Si la luminosidad en una habitación de un tipo está por debajo del
+; mínimo establecido, enciende la luz:
 (defrule encender_baja_luminosidad
   (valor luminosidad ?hab ?valor)
   (room ?nombre ?$ ?tipo)
@@ -301,6 +313,8 @@
 )
 
 ; Corregir alta luminosidad:
+; Si la luminosidad en una habitación de un tipo está por encima del
+; máximo establecido, apaga la luz:
 (defrule apagar_alta_luminosidad
   (valor luminosidad ?hab ?valor)
   (room ?nombre ?$ ?tipo)
@@ -312,28 +326,47 @@
 )
 
 ; Encender luces en base a los sensores de movimiento:
-
 (defrule encender_movimiento
   (valor estadoluz ?hab off)
   (valor movimiento ?hab on)
   =>
-  (accion pulsador_luz ?hab encender)
+  (assert(accion pulsador_luz ?hab encender))
 )
 
 ; OPCIÓN 1: apagar una sala si no hay movimiento en ella tras 10 segundos
 ; desde la detección de movimiento off.
 
+; Declarar una habitación como parcialmente inactiva:
+; Si en una habitación se detecta la luz encendida y el sensor de movimiento
+; da la señal de off, consideramos esa habitación como parcialmente inactiva,
+; añadiendo esto a la base de hechos:
 (defrule hab_parcialmente_inactiva
   (valor_registrado ?seg estadoluz ?hab on)
   (valor movimiento ?hab off)
   =>
-  (parc_inactiva ?hab ?seg)
+  (assert(parc_inactiva ?hab ?seg))
 
 )
 
+; Si en una habitación parcialmente inactiva no se detecta movimiento en
+; un plazo de diez segundos, se considera inactiva y se apaga la luz:
 (defrule hab_inactiva
-  (parc_inactiva ?hab ?seg)
-  ()
+  ; La habitación se encuentra parcialmente inactiva:
+  ?parc <- (parc_inactiva ?hab ?seg)
+
+  ; Establecemos el margen de 10 segundos de espera:
+  (bind ?margen (+ ?seg 10))
+
+  ; Comprobamos que no ha habido movimiento en los diez segundos posteriores
+  (and
+    (not(valor movimiento ?seg2))
+    (test (< ?seg2 ?margen))
+    (test (> ?seg2 ?seg))
+  )
+  =>
+  ; La habitación pasa a estar inactiva, y por tanto apagamos las luces:
+  (retract ?parc)
+  (assert(accion pulsador_luz ?hab apagar))
 )
 
 
