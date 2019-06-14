@@ -56,6 +56,9 @@
     (humedad lirio 400)
     (temperatura lirio 25)
     (luminosidad lirio 500)
+
+    ; Clima para pruebas
+    (nuevo_clima despejado)
 )
 
 ; -----------------------------------------------
@@ -112,10 +115,11 @@
 
 ; Bucle simulación cutre:
 (defrule BucleSimulacionCutre
-    (declare (salience -50))
+    (declare (salience -10))
+    (not(secar))
     (simulacion ?max)
     ?p <- (paso ?n)
-    (< ?n ?max)
+    (test(< ?n ?max))
     =>
     ; Secar las cosas:
     (assert (secar))
@@ -126,21 +130,62 @@
 
 ; Secar las plantas:
 (defrule Secar
-    ?bb <- (secar)
+    (declare (salience -1))
+    (secar)
     (secado ?s)
     (planta ?p ? ?)
+    (not(planta_seca ?p))
+    (not(borrar_planta_seca))
     ?hh <- (humedad ?p ?v)
     =>
     (bind ?vv (+ ?v ?s))
-    (retract ?bb)
     (retract ?hh)
     (assert (humedad ?p ?vv))
+    (assert (planta_seca ?p))
+)
+
+; Borrar estado seco:
+(defrule BorrarPrimerSeco
+    (declare (salience -5))
+    ?p <- (planta_seca ?planta)
+    =>
+    (retract ?p)
+    (assert (borrar_planta_seca))
+)
+
+; Borrar estado seco:
+(defrule BorrarSeco
+    (declare (salience -5))
+    ?p <- (planta_seca ?planta)
+    (borrar_planta_seca)
+    =>
+    (retract ?p)
+)
+
+; No seguir borrando plantas secas:
+(defrule PararBorrarPlantasSecas
+    (declare (salience -6))
+    ?ss <- (secar)
+    ?s <- (borrar_planta_seca)
+    =>
+    (retract ?s)
+    (retract ?ss)
 )
 
 ; Fin simulación cutre:
 (defrule FinSimulacionCutre
     (declare (salience -100))
     ?s <- (simulacion ?max)
+    ?p <- (paso ?)
+    =>
+    (retract ?s)
+    (retract ?p)
+)
+
+; Borrar los secar:
+(defrule BorrarSecar
+    (declare (salience -100))
+    ?s <- (secar)
     =>
     (retract ?s)
 )
