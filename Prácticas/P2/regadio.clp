@@ -106,7 +106,28 @@
 )
 
 ; -----------------------------------------------
-; Simulación cutre:
+; Detectar que una planta está seca:
+(defrule PeligroPlantaSeca
+    (planta ?p ?min ?max)
+    (humedad ?p ?v)
+    (test(> ?v ?min))
+    =>
+    (assert(peligro_seca ?p))
+)
+
+(defrule regarPlantaSeca
+    ?bb <- (peligro_seca ?p)
+    ?h <- (humedad ?p ?v)
+    =>
+    (bind ?vv (- ?v 20))
+    (retract ?h)
+    (printout t crlf "Regando")
+    (assert (humedad ?p ?vv))
+    (retract ?bb)
+)
+
+; -----------------------------------------------
+; Bucle de secado:
 (defrule InicioSimulacionCutre
     (simulacion ?n)
     =>
@@ -115,7 +136,7 @@
 
 ; Bucle simulación cutre:
 (defrule BucleSimulacionCutre
-    (declare (salience -10))
+    (declare (salience -100))
     (not(secar))
     (simulacion ?max)
     ?p <- (paso ?n)
@@ -130,7 +151,7 @@
 
 ; Secar las plantas:
 (defrule Secar
-    (declare (salience -1))
+    (declare (salience -10))
     (secar)
     (secado ?s)
     (planta ?p ? ?)
@@ -146,7 +167,7 @@
 
 ; Borrar estado seco:
 (defrule BorrarPrimerSeco
-    (declare (salience -5))
+    (declare (salience -50))
     ?p <- (planta_seca ?planta)
     =>
     (retract ?p)
@@ -155,7 +176,7 @@
 
 ; Borrar estado seco:
 (defrule BorrarSeco
-    (declare (salience -5))
+    (declare (salience -50))
     ?p <- (planta_seca ?planta)
     (borrar_planta_seca)
     =>
@@ -164,7 +185,7 @@
 
 ; No seguir borrando plantas secas:
 (defrule PararBorrarPlantasSecas
-    (declare (salience -6))
+    (declare (salience -60))
     ?ss <- (secar)
     ?s <- (borrar_planta_seca)
     =>
