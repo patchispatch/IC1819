@@ -1,0 +1,6 @@
+(clear)
+(load "regadio.clp")
+(load "secadora.clp")
+(reset)
+(assert(simulacion 100))
+(run)

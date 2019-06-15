@@ -11,9 +11,16 @@
 (deffacts plantas
     ; -------------------------------------------
     ; Datos del ambiente al inicio.
-    (t_global 30)
+    (t_global 80)
     (l_global 600)
     (secado 0)
+
+    ; -------------------------------------------
+    ; Datos de alarma de humedad y temperatura para cualquier planta.
+    (t_max 40)
+    (t_min 5)
+    (h_max 200)
+    (h_min 850)
 
     ; -------------------------------------------
     ; Datos de los climas.
@@ -46,24 +53,25 @@
     (luminosidad cactus 500)
 
     ; Planta 2: tomatera
-    (planta tomatera 800 300)
+    (planta tomatera 500 250)
     (humedad tomatera 400)
     (temperatura tomatera 25)
     (luminosidad tomatera 500)
 
     ; Planta 3: lirio
-    (planta lirio 800 300)
+    (planta lirio 600 400)
     (humedad lirio 400)
     (temperatura lirio 25)
     (luminosidad lirio 500)
 
     ; Clima para pruebas
-    (nuevo_clima despejado)
+    ;(nuevo_clima despejado)
 )
 
 ; -----------------------------------------------
 ; Ajusta las temperaturas al nuevo clima:
 (defrule CambioClima
+    (declare (salience 100))
     ; Debe estar despejado
     ?c <- (nuevo_clima ?clima)
 
@@ -115,98 +123,38 @@
     (assert(peligro_seca ?p))
 )
 
+; -----------------------------------------------
+; Regar una planta cuando está seca:
 (defrule regarPlantaSeca
     ?bb <- (peligro_seca ?p)
     ?h <- (humedad ?p ?v)
     =>
-    (bind ?vv (- ?v 20))
+    (bind ?vv (- ?v 10))
     (retract ?h)
-    (printout t crlf "Regando")
+    (printout t crlf "Regando " ?p ": humedad " ?vv)
     (assert (humedad ?p ?vv))
     (retract ?bb)
 )
 
 ; -----------------------------------------------
-; Bucle de secado:
-(defrule InicioSimulacionCutre
-    (simulacion ?n)
-    =>
-    (assert(paso 0))
-)
-
-; Bucle simulación cutre:
-(defrule BucleSimulacionCutre
-    (declare (salience -100))
-    (not(secar))
-    (simulacion ?max)
-    ?p <- (paso ?n)
-    (test(< ?n ?max))
-    =>
-    ; Secar las cosas:
-    (assert (secar))
-    (bind ?nn (+ ?n 1))
-    (assert (paso ?nn))
-    (retract ?p)
-)
-
-; Secar las plantas:
-(defrule Secar
-    (declare (salience -10))
-    (secar)
-    (secado ?s)
+; Detectar que una planta está ardiendo:
+(defrule PeligroPlantaArdiendo
     (planta ?p ? ?)
-    (not(planta_seca ?p))
-    (not(borrar_planta_seca))
-    ?hh <- (humedad ?p ?v)
+    (temperatura ?p ?v)
+    (t_max ?max)
+    (test(>= ?v ?max))
     =>
-    (bind ?vv (+ ?v ?s))
-    (retract ?hh)
-    (assert (humedad ?p ?vv))
-    (assert (planta_seca ?p))
+    (assert (peligro_ardiendo ?p))
 )
 
-; Borrar estado seco:
-(defrule BorrarPrimerSeco
-    (declare (salience -50))
-    ?p <- (planta_seca ?planta)
+; -----------------------------------------------
+(defrule refrescarPlanta
+    ?bb <- (peligro_ardiendo ?p)
+    ?h <- (temperatura ?p ?v)
     =>
-    (retract ?p)
-    (assert (borrar_planta_seca))
-)
-
-; Borrar estado seco:
-(defrule BorrarSeco
-    (declare (salience -50))
-    ?p <- (planta_seca ?planta)
-    (borrar_planta_seca)
-    =>
-    (retract ?p)
-)
-
-; No seguir borrando plantas secas:
-(defrule PararBorrarPlantasSecas
-    (declare (salience -60))
-    ?ss <- (secar)
-    ?s <- (borrar_planta_seca)
-    =>
-    (retract ?s)
-    (retract ?ss)
-)
-
-; Fin simulación cutre:
-(defrule FinSimulacionCutre
-    (declare (salience -100))
-    ?s <- (simulacion ?max)
-    ?p <- (paso ?)
-    =>
-    (retract ?s)
-    (retract ?p)
-)
-
-; Borrar los secar:
-(defrule BorrarSecar
-    (declare (salience -100))
-    ?s <- (secar)
-    =>
-    (retract ?s)
+    (bind ?vv (- ?v 10))
+    (retract ?h)
+    (printout t crlf "Refrescando " ?p ": temperatura " ?vv)
+    (assert (temperatura ?p ?vv))
+    (retract ?bb)
 )
