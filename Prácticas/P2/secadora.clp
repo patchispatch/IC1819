@@ -77,6 +77,11 @@
     (l_noche lluvioso 180)
     (l_dia lluvioso 650)
 
+    ; -------------------------------------------
+    ; Estado inicial:
+    (hora 8)
+    (horario madrugada)
+    (clima despejado)
 )
 
 ; -----------------------------------------------
@@ -84,6 +89,7 @@
 (defrule CambioClima
     (declare (salience 100))
     ?c <- (nuevo_clima ?clima)
+
     =>
     ; Borramos
     (retract ?c)
@@ -97,58 +103,126 @@
 ; Mañana a Tarde:
 (defrule MañanaATarde
     (hora 14)
-    ?m <- (manana)
+    ?m <- (horario manana)
+    ?tt <- (t_global ?)
+    ?ll <- (l_global ?)
+    ?ss <- (secado ?)
+
+    (clima ?clima)
+    (h_dia ?clima ?h)
+    (t_dia ?clima ?t)
+    (l_dia ?clima ?l)
     =>
     (retract ?m)
-    (assert (tarde))
+    (retract ?tt)
+    (retract ?ll)
+    (retract ?ss)
+
+    (assert (horario tarde))
+    (assert (t_global ?t))
+    (assert (l_global ?l))
+    (assert (secado ?h))
 )
 
 ; Tarde a Noche:
 (defrule TardeANoche
     (hora 20)
-    ?t <- (tarde)
+    ?m <- (horario tarde)
+    ?tt <- (t_global ?)
+    ?ll <- (l_global ?)
+    ?ss <- (secado ?)
+
+    (clima ?clima)
+    (h_base ?clima ?h)
+    (t_base ?clima ?t)
+    (l_base ?clima ?l)
     =>
-    (retract ?t)
-    (assert (noche))
+    (retract ?m)
+    (retract ?tt)
+    (retract ?ll)
+    (retract ?ss)
+
+    (assert (horario noche))
+    (assert (t_global ?t))
+    (assert (l_global ?l))
+    (assert (secado ?h))
 )
 
 ; Noche a Madrugada:
 (defrule NocheAMadrugada
     (hora 2)
-    ?n <- (noche)
+    ?m <- (horario noche)
+    ?tt <- (t_global ?)
+    ?ll <- (l_global ?)
+    ?ss <- (secado ?)
+
+    (clima ?clima)
+    (h_noche ?clima ?h)
+    (t_noche ?clima ?t)
+    (l_noche ?clima ?l)
     =>
-    (retract ?n)
-    (assert (madrugada))
+    (retract ?m)
+    (retract ?tt)
+    (retract ?ll)
+    (retract ?ss)
+
+    (assert (horario madrugada))
+    (assert (t_global ?t))
+    (assert (l_global ?l))
+    (assert (secado ?h))
 )
 
 ; Madrugada a Mañana:
 (defrule MadrugadaAMañana
     (hora 8)
-    ?m <- (madrugada)
+    ?m <- (horario madrugada)
+    ?tt <- (t_global ?)
+    ?ll <- (l_global ?)
+    ?ss <- (secado ?)
+
+    (clima ?clima)
+    (h_base ?clima ?h)
+    (t_base ?clima ?t)
+    (l_base ?clima ?l)
     =>
     (retract ?m)
-    (assert (manana))
+    (retract ?tt)
+    (retract ?ll)
+    (retract ?ss)
+
+    (assert (horario manana))
+    (assert (t_global ?t))
+    (assert (l_global ?l))
+    (assert (secado ?h))
 )
 
 ; -----------------------------------------------
-; Ajustar temperatura y secado al momento del día y al clima:
-(defrule AjustarValoresClima
-    
+; Simular el paso de las horas:
+(defrule PasoDeLasHoras
+    ?h <- (hora ?n)
+    (not(bucle_secado ?))
+    (not(bucle_calentado))
+    =>
+    (bind ?nn (mod (+ ?n 1) 24))
+    (retract ?h)
+    (assert (hora ?nn))
+    (assert (bucle_secado 5))
+    (assert (bucle_calentado))
 )
 
 ; -----------------------------------------------
 ; Bucle de secado (se ejecuta cada hora):
-(defrule InicioSimulacion
-    (simulacion ?n)
+(defrule InicioSecado
+    (bucle_secado ?n)
     =>
     (assert(paso 0))
 )
 
 ; Bucle simulación cutre:
-(defrule BucleSimulacion
+(defrule BucleSecado
     (declare (salience -100))
     (not(secar))
-    (simulacion ?max)
+    (bucle_secado ?max)
     ?p <- (paso ?n)
     (test(< ?n ?max))
     =>
@@ -164,9 +238,9 @@
     (declare (salience -10))
     (secar)
     (secado ?s)
-    (planta ?p ? ?)
-    (not(planta_seca ?p))
-    (not(borrar_planta_seca))
+    (planta ?p ? ? ?)
+    (not (planta_seca ?p))
+    (not (borrar_planta_seca))
     ?hh <- (humedad ?p ?v)
     =>
     (bind ?vv (+ ?v ?s))
@@ -204,9 +278,9 @@
 )
 
 ; Fin simulación cutre:
-(defrule FinSimulacion
+(defrule FinBucleSecado
     (declare (salience -100))
-    ?s <- (simulacion ?max)
+    ?s <- (bucle_secado ?max)
     ?p <- (paso ?)
     =>
     (retract ?s)
@@ -222,4 +296,84 @@
 )
 
 ; -----------------------------------------------
-; 
+; Bucle de calentado (se ejecuta cada hora)
+(defrule Calentado
+    (bucle_calentado)
+    (planta ?p ? ? ?)
+    (not (planta_caliente ?p))
+    (not (borrar_planta_caliente))
+    ?tt <- (temperatura ?p ?t)
+    (t_global ?tg)
+    (test (< ?t ?tg))
+    =>
+    (bind ?tn (+ ?t 2))
+    (retract ?tt)
+    (assert (temperatura ?p ?tn))
+    (assert (planta_caliente ?p))
+)
+
+(defrule Enfriado
+    (bucle_calentado)
+    (planta ?p ? ? ?)
+    (not(planta_caliente ?p))
+    (not (borrar_planta_caliente))
+    ?tt <- (temperatura ?p ?t)
+    (t_global ?tg)
+    (test (> ?t ?tg))
+    =>
+    (bind ?tn (- ?t 1))
+    (retract ?tt)
+    (assert (temperatura ?p ?tn))
+    (assert (planta_caliente ?p))
+)
+
+(defrule Igualado
+    (bucle_calentado)
+    (planta ?p ? ? ?)
+    (not (planta_caliente ?p))
+    (not (borrar_planta_caliente))
+    ?tt <- (temperatura ?p ?t)
+    (t_global ?tg)
+    (test (eq ?t ?tg))
+    =>
+    (assert (planta_caliente ?p))
+)
+
+; Borrar plantas calientes:
+(defrule BorrarPrimerCaliente
+    (declare (salience -50))
+    ?p <- (planta_caliente ?planta)
+    =>
+    (retract ?p)
+    (assert (borrar_planta_caliente))
+)
+
+(defrule BorrarCaliente
+    (declare (salience -50))
+    ?p <- (planta_seca ?planta)
+    (borrar_planta_caliente)
+    =>
+    (retract ?p)
+)
+
+; No seguir borrando plantas calientes:
+(defrule FinBucleCalentado
+    (declare (salience -60))
+    ?ss <- (bucle_calentado)
+    ?s <- (borrar_planta_caliente)
+    =>
+    (retract ?s)
+    (retract ?ss)
+)
+
+
+; -----------------------------------------------
+; Cambiar clima al día siguiente:
+(defrule ClimaSiguiente
+    (hora 0)
+    ?s <- (clima_siguiente ?clima)
+    (not (nuevo_clima ?))
+    =>
+    (assert (nuevo_clima ?clima))
+    (retract ?s)
+)

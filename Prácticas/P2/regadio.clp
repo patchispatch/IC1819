@@ -52,6 +52,7 @@
     (planta ?p ?min ?max ?)
     ?h <- (humedad ?p ?v)
     (permitido_regar)
+    (not (clima_siguiente lluvioso))
     =>
     (bind ?vv (/ (+ ?min ?max) 2))
     (retract ?h)
@@ -65,7 +66,7 @@
 (defrule EmergenciaPlantaSeca
     (planta ?p ?min ?max ?)
     (humedad ?p ?v)
-    (test(> ?v (+ ?min 150))
+    (test(> ?v (+ ?min 150)))
     =>
     (assert(emergencia_seca ?p))
 )
@@ -105,4 +106,25 @@
     (printout t crlf "Refrescando " ?p ": temperatura " ?vv)
     (assert (temperatura ?p ?vv))
     (retract ?bb)
+)
+
+; -----------------------------------------------
+; Activar posibilidad de riego normal:
+(defrule PermitidoRegar
+    (hora ?n)
+    (horario_riego ?h1 ?h2)
+    (test (eq ?h1 ?n))
+    =>
+    (assert (permitido_regar))
+)
+
+; -----------------------------------------------
+; Desactivar posibilidad de riego normal:
+(defrule NoPermitidoRegar
+    (hora ?n)
+    (horario_riego ?h1 ?h2)
+    (test (eq ?h2 ?n))
+    ?p <- (permitido_regar)
+    =>
+    (retract ?p)
 )
