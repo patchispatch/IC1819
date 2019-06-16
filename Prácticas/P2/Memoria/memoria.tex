@@ -1,0 +1,220 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}	%Idioma
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx} %Añadir imágenes
+\usepackage{geometry}	%Ajustar márgenes
+\usepackage[export]{adjustbox}[2011/08/13]
+\usepackage{float}
+\restylefloat{table}
+\usepackage{hyperref}
+\usepackage{titling}
+%\usepackage{minted}
+%Opciones de encabezado y pie de página:
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{}
+%\rhead{}
+\lfoot{Ingeniería del Conocimiento}
+\cfoot{}
+\rfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+%Opciones de fuente:
+\renewcommand{\familydefault}{\sfdefault}
+\setlength{\parindent}{0pt}
+\setlength{\headheight}{15pt}
+\setlength{\voffset}{10mm}
+
+% Custom colors
+\usepackage{color}
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+
+\usepackage{listings}
+
+\pretitle{%
+  \centering
+  \LARGE
+  \includegraphics[scale=0.5]{img/logo.png}\\[\bigskipamount]
+}
+\posttitle{\begin{center} \end{center}}
+
+\author{Juan Ocaña Valenzuela \\ DNI 32732331L}
+\title{\textbf{Práctica 2: sistema de riego inteligente para un cultivo doméstico.}}
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\maketitle
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Descripción general del problema abordado}
+Se ha tomado como ejemplo el problema propuesto en el guión de prácticas, y se ha planteado un sistema basado en el conocimiento
+que registra datos sobre la humedad, temperatura y luminosidad del ambiente y de cada tiesto, así como una estimación simple
+del momento del día y sus efectos en las plantas, de forma que podamos optimizar el riego y consumir menos agua.
+
+\section{Cómo funciona el sistema}
+El sistema hace uso de los distintos sensores colocados en cada cultivo para monitorizar el estado del mismo, supliendo las necesidades de riego y regulando las altas temperaturas cuando es necesario.
+
+Idealmente, el sistema se conectaría a una base de datos con información sobre diferentes plantas, sus condiciones ideales de cultivo y valores ideales de humedad, temperatura y luminosidad. Al ser este sistema un planteamiento algo más simple, se han introducido tres cultivos de prueba, con valores arbitrarios para probar la efectividad del riego inteligente: una tomatera, un cactus y un lirio.
+
+Cada planta tiene definido su rango de humedad ideal, expresado con las unidades del higrómetro dado como ejemplo en el guión de prácticas, y un valor de humedad, temperatura y luminosidad actual.
+
+\subsection{Simplificaciones para poder realizar pruebas simulando sensores}
+Para poder probar el sistema de una forma más cómoda se han definido cuatro posibles climas con diferentes valores de temperatura, luminosidad y humedad, algo irreales, pero suficientes para probar las capacidades del sistema. 
+
+También se han definido cuatro momentos del día para simular el paso del tiempo, y poder probar la optimización del regadío y el resto de sistemas.
+
+\textbf{Climas:}
+\begin{itemize}
+\item Despejado
+\item Nublado
+\item Árido
+\item Lluvioso
+\end{itemize}
+
+\textbf{Tramos del día:}
+\begin{itemize}
+\item Mañana (8 a 14)
+\item Tarde (14 a 20)
+\item Noche (20 a 2)
+\item Madrugada (2 a 8)
+\end{itemize}
+
+El paso del tiempo a lo largo del día se controlará con un bucle que simulará el paso de las horas. En cada tramo del día se fijarán unos valores de temperatura, humedad y luminosidad que estarán definidos en los datos del clima activo, y cada hora se ejecutará otro bucle que secará las plantas en función de esos valores.
+
+Nótese que esta simulación simplista no forma parte del sistema experto; simplemente permite que las pruebas sean más sencillas. En un ambiente real, el clima y el medio ambiente harán el trabajo, definiéndose los tramos del día en función de la luminosidad del ambiente o siendo programados por el usuario del sistema.
+
+Pasamos ahora a definir los distintos mecanismos de los que hace uso el sistema.
+
+\subsection{Riego}
+El riego de una planta es la parte más importante del sistema, y se realiza mediante dos mecanismos:
+
+\subsubsection*{Condición 1: riego normal}
+Con tal de ahorrar agua lo máximo posible y mantener nuestras plantas en buen estado, se ha planteado que el riego normal se realizará únicamente de madrugada, ya que la ausencia de sol hará que el agua tarde más en evaporarse, y las plantas puedan absorber mejor los nutrientes que necesitan. 
+
+Por tanto, las condiciones para que se active el mecanismo de riego normal son:
+\begin{itemize}
+\item Que sea de madrugada.
+\item Que la humedad del cultivo sea inferior al intervalo de humedad ideal.
+\end{itemize}
+
+Si la humedad se encuentra por debajo del valor inferior del intervalo durante el resto del día, se regará por la noche. En condiciones normales, la planta no morirá en cuestión de horas, por lo que podemos permitir que esto suceda.
+
+\subsubsection*{Condición 2: riego de emergencia}
+Hemos hablado justo antes de que una planta puede permitirse no ser regada durante algunas horas con el tiesto algo seco si las condiciones son normales, con tal de ahorrar agua. 
+
+Sin embargo, pueden darse condiciones adversas, como un anticiclón, que cause una temporada especialmente agresiva para las plantas a lo largo del día. Es en estos casos en los que se activará el riego de emergencia, ignorando la condición de que sea de madrugada para regar en casos excepcionales.
+
+El riego de emergencia se activará cuando la humedad del cultivo alcance un estado crítico, definido en el sistema. Se hará uso, además, del sistema de control de temperatura, definido más adelante.
+
+\subsection{Control de temperatura}
+El control de la temperatura de un tiesto es un mecanismo algo más secundario que el riego, pero importante en temporadas de altas temperaturas como el verano.
+
+La regulación consistirá en un vaporizador de agua suave, que también humedecerá el tiesto de forma leve.
+
+Este sistema se activará únicamente en caso de temperaturas muy altas, con un umbral definido en el sistema. 
+
+
+\section{Descripción del proceso seguido}
+\subsection{Procedimiento seguido para el desarrollo de la base de conocimiento}
+Para desarrollar la base de conocimiento se han tenido en cuenta las consideraciones especificadas en el guión de la práctica.
+
+Primero se realizó un pequeño esquema sobre las condiciones en las que se debería regar, y de ese esquema surgió la representación de las plantas como hechos. 
+
+Cada planta viene representada por un hecho del tipo \texttt{(planta ?nombre ?h\_min ?h\_max ?t\_max)}, así como de sus respectivos sensores, representados con hechos como los siguientes:
+
+\begin{itemize}
+\item \texttt{(humedad ?nombre ?valor)}
+\item \texttt{(temperatura ?nombre ?valor)}
+\item \texttt{(luminosidad ?nombre ?valor)}
+\end{itemize}
+
+Los valores \texttt{?h\_min} y \texttt{?h\_max} del primer hecho indican el rango de humedad ideal de la planta, y el valor de \texttt{?t\_max} indica la temperatura máxima que puede soportar de forma prolongada.
+
+\medskip
+
+A la hora de modelar las reglas, se pensó que un sistema bien modelado debía ser lo más simple posible, ya que todas las variables del entorno serán leídas por los sensores. De la información recibida, se procesa si una planta está en peligro por sequedad o altas temperaturas, y se introducen hechos que informan de ello a los mecanismos pertinentes. Estos, según el resto de condiciones (la hora del día, por ejemplo) decidirán cuándo actuar. 
+
+La complejidad del sistema no reside en la implementación, sino en el planteamiento de la misma. Simulando entrevistas con un experto, se han mantenido conversaciones sobre el cuidado de las plantas, extrayendo varias ideas sobre cómo hacer las cosas y qué evitar. También se ha tenido en cuenta el rol del usuario, implementando formas de consultar la información sobre los cultivos, e incluso añadir nuevos al sistema.
+
+\subsection{Procedimiento de validación y verificación del sistema}
+Para los procesos de validación y verificación se ha planteado la simulación mencionada en el punto anterior, que pone a prueba todos los mecanismos del sistema bajo unas condiciones fijadas de forma arbitraria.
+
+Los resultados de la simulación se han mostrado a personas que tomaban el papel tanto de experto como de usuario, para ajustar el sistema a sus conocimientos y necesidades.
+
+\section{Descripción del sistema}
+\subsection{Variables de entrada del problema}
+Para que el sistema comience a funcionar, es necesario que figuren en la base de conocimientos los datos de, al menos, un cultivo:
+
+\begin{itemize}
+\item Nombre del cultivo.
+\item Rango de humedad ideal del cultivo.
+\item Temperatura máxima que puede soportar el cultivo.
+\item Sensor de humedad del cultivo.
+\item Sensor de temperatura del cultivo.
+\item Sensor de luminosidad del cultivo.
+\end{itemize}
+
+Los datos de un cactus podrían figurar de la siguiente forma:
+
+\medskip
+
+\texttt{(planta cactus 800 300 40)}
+    
+\texttt{(humedad cactus 400)}
+    
+\texttt{(temperatura cactus 25)}
+
+\texttt{(luminosidad cactus 500)}
+
+\medskip
+
+Además, para poder cumplir la restricción de que únicamente podremos regar durante un horario concreto en condiciones normales, necesitamos saber el rango de horas que lo conforman:
+
+\medskip
+
+\texttt{
+(horario\_riego ?inicio ?fin)
+}
+
+\medskip
+
+\textit{\textbf{Nota:} como ya se ha mencionado anteriormente, los datos del clima los aportaremos mediante la simulación, pero no forman parte del sistema como tal.}
+
+\subsection{Especificación de los módulos del problema y su funcionamiento}
+Cada mecanismo del sistema presenta una solución a un problema distinto, y en un futuro podrían añadirse más en función de la infraestructura aportada, como por ejemplo focos o parasoles automatizados.
+
+Nos centramos ahora en los mecanismos implementados:
+
+\subsubsection*{Riego}
+Si una planta necesita ser regada sin urgencia, aparecerá en la base de hechos \texttt{(peligro\_seca ?planta)}, que indicará que en el próximo turno de regado el sistema se activará para este cultivo. Esto se detectará mediante la regla \textit{PeligroPlantaSeca}, que detecta que la humedad de una planta se encuentra por debajo del rango ideal.
+
+El hecho introducido activará la regla \textit{RegarPlantaSeca} siempre que esté permitido regar, algo que controlaremos con el tiempo. Se aumentará la humedad del cultivo hasta la mitad de su intervalo de humedad ideal, haciendo desaparecer su condición de peligro eliminando el hecho que lo indicaba.
+
+
+\medskip
+
+En el caso del riego de emergencia, se introducirá \texttt{(riego\_emergencia ?planta)} en la base de hechos, y el mecanismo de riego de emergencia se activará. Esto se hará con la regla \textit{EmergenciaPlantaSeca}, que detectará que la temperatura del cultivo es superior al máximo indicado.
+
+En este caso, la humedad de la planta aumentará hasta su máximo ideal, ya que se supondrá que, al haberse secado de forma alarmante, las condiciones son adversas. Esto se realizará mediante la regla \textit{RegadoDeEmergencia}.
+
+\subsubsection*{Control de temperatura}
+Si una planta está por encima de su límite de temperatura, aparecerá en la base de hechos \texttt{(peligro\_ardiendo ?planta)}, que indicará que el mecanismo de vaporizado de agua debe activarse de inmediato.
+
+Una vez vaporizado el tiesto, la temperatura se habrá reducido hasta diez grados centígrados, y la condición de peligro desaparecerá, al igual que con el mecanismo de riego.
+
+
+
+
+\end{document}

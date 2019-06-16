@@ -131,6 +131,12 @@
 )
 
 ; -----------------------------------------------
+; Ajustar temperatura y secado al momento del día y al clima:
+(defrule AjustarValoresClima
+    
+)
+
+; -----------------------------------------------
 ; Bucle de secado (se ejecuta cada hora):
 (defrule InicioSimulacion
     (simulacion ?n)
