@@ -11,18 +11,8 @@
 
 (deffacts climas
     ; -------------------------------------------
-    ; Datos del ambiente al inicio.
-    (t_global 80)
-    (l_global 600)
+    ; Factor de secado:
     (secado 0)
-
-    ; -------------------------------------------
-    ; Datos de alarma de humedad y temperatura para cualquier planta.
-    (t_max 40)
-    (t_min 5)
-    (h_max 200)
-    (h_min 850)
-
     ; -------------------------------------------
     ; Datos de los climas.
     ; Despejado:

@@ -214,6 +214,39 @@ Si una planta está por encima de su límite de temperatura, aparecerá en la ba
 
 Una vez vaporizado el tiesto, la temperatura se habrá reducido hasta diez grados centígrados, y la condición de peligro desaparecerá, al igual que con el mecanismo de riego.
 
+\section{Manual de uso del sistema}
+Para utilizar el sistema con la simulación aportada se ha de cargar el archivo batch \textit{simulacion.bat} aportado, que comenzará un ciclo infinito en el que las horas pasarán, las plantas se secarán en función del clima activo y el tramo horario del día.
+
+A continuación se muestran las funciones que el usuario puede utilizar para controlar la simulación y el sistema de regadío.
+
+\subsection*{Añadir cultivos}
+Para añadir un cultivo, se ha de introducir el hecho \texttt{(add)}. El sistema preguntará por pantalla los datos del cultivo, y se añadirá a la base de hechos, con sus respectivos sensores. Se supondrá la planta regada, y los datos de luminosidad y temperatura se tomarán del ambiente.
+
+\subsection*{Obtener datos de un cultivo}
+Para obtener los datos actuales de un cultivo, se ha de introducir el hecho \texttt{(datos ?planta)}, siendo ?planta el nombre del cultivo.
+Se mostrarán por pantalla los datos de los sensores en ese momento, así como los valores de humedad ideal y la temperatura máxima que puede soportar la planta.
+
+\subsection*{Cambiar el clima}
+Para cambiar el clima inmediatamente, se ha de introducir el hecho \texttt{(nuevo\_clima ?clima)}, siendo clima uno de los siguientes:
+
+\begin{itemize}
+\item despejado
+\item nublado
+\item arido
+\item lluvioso
+\end{itemize}
+
+\medskip
+
+Para establecer el clima del día siguiente, se ha de introducir el hecho \texttt{(clima\_siguiente ?clima)}. Esto hará que cuando vuelvan a ser las 00:00, el clima cambiará al establecido. Nótese que si el clima previsto para el día siguiente es lluvioso, no se regará en el horario establecido, salvo emergencia.
+
+\subsection*{Cambiar el horario de riego}
+Para cambiar el horario de riego se debe añadir el hecho \texttt{(nuevo\_horario ?inicio ?fin)}. Esto eliminará el anterior horario, y pondrá en marcha el nuevo.
+
+
+
+
+
 
 
 

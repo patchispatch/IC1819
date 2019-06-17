@@ -32,8 +32,63 @@
     ; -------------------------------------------
     ; Horario de riego:
     (horario_riego 2 8)
+
+    ; -------------------------------------------
+    ; Datos del ambiente al inicio.
+    (t_global 80)
+    (l_global 600)
 )
 
+; -----------------------------------------------
+; Añadir un nuevo cultivo:
+(defrule AddCultivo
+    (declare (salience 500))
+    ?a <- (add)
+    =>
+    (printout t crlf "Introduce los datos de tu planta en este formato: nombre humedad_min humedad_max temperatura_max" crlf)
+    (bind ?datos (explode$ (readline)))
+    (assert (planta ?datos))
+    (assert (nueva_planta ?datos))
+    (retract ?a)
+)
+
+(defrule NuevaPlanta
+    (declare (salience 500))
+    ?n <- (nueva_planta ?nombre ?h_min ?h_max ?)
+    (t_global ?t)
+    (l_global ?l)
+    =>
+    (assert(humedad ?nombre ?h_max))
+    (assert(temperatura ?nombre ?t))
+    (assert(luminosidad ?nombre ?l))
+    (retract ?n)
+)
+
+; -----------------------------------------------
+; Imprimir datos de un cultivo:
+(defrule DatosCultivo
+    (declare (salience 500))
+    ?d <- (datos ?planta)
+    (planta ?planta ?h_min ?h_max ?t_max)
+    (humedad ?planta ?h)
+    (temperatura ?planta ?t)
+    (luminosidad ?planta ?l)
+    =>
+    (printout t crlf "Datos de la planta " ?planta ":" crlf "Temperatura: " ?t "." crlf "Humedad: " ?h "." crlf "Luminosidad: " ?l "." crlf "Humedad mínima: " ?h_min "." crlf "Humedad máxima: " ?h_max "." crlf "Temperatura máxima: " ?t_max "." crlf )
+    (retract ?d)
+)
+
+; -----------------------------------------------
+; Cambiar el horario de riego:
+(defrule NuevoHorarioRiego
+    (declare (salience 500))
+    ?n <- (nuevo_horario ?inicio ?fin)
+    ?o <- (horario_riego ? ?)
+    =>
+    (retract ?o)
+    (assert (horario_riego ?inicio ?fin))
+    (retract ?n)
+)
 
 ; -----------------------------------------------
 ; Detectar que una planta está seca:
@@ -113,7 +168,7 @@
 (defrule PermitidoRegar
     (hora ?n)
     (horario_riego ?h1 ?h2)
-    (test (eq ?h1 ?n))
+    (test (>= ?h1 ?n))
     =>
     (assert (permitido_regar))
 )
@@ -123,7 +178,7 @@
 (defrule NoPermitidoRegar
     (hora ?n)
     (horario_riego ?h1 ?h2)
-    (test (eq ?h2 ?n))
+    (test (>= ?h2 ?n))
     ?p <- (permitido_regar)
     =>
     (retract ?p)
